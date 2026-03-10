@@ -11,16 +11,16 @@ import 'providers/theme_provider.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // ── Initialize Firebase ───────────────────────────────
+   
   await Firebase.initializeApp();
 
-  // ── Lock to portrait ──────────────────────────────────
+  // Lock to portrait 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // ── Transparent system bars ───────────────────────────
+  // Transparent system bars 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor:           Colors.transparent,
