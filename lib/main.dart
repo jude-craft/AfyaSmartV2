@@ -10,17 +10,13 @@ import 'providers/theme_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-   
   await Firebase.initializeApp();
 
-  // Lock to portrait 
   await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // Transparent system bars 
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor:           Colors.transparent,
@@ -33,8 +29,14 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider()),
-        ChangeNotifierProvider(create: (_) => ChatProvider()),
         ChangeNotifierProvider(create: (_) => HistoryProvider()),
+        ChangeNotifierProxyProvider<HistoryProvider, ChatProvider>(
+          create: (_) => ChatProvider(),
+          update: (_, history, chat) {
+            chat!.setHistoryProvider(history);
+            return chat;
+          },
+        ),
       ],
       child: const AfyaSmartApp(),
     ),
