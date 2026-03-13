@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import '../../../app.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_constants.dart';
 import '../../../core/theme/app_text_style.dart';
-import '../../../providers/auth_provider.dart';
 import '../../widgets/common/afya_logo.dart';
-import '../auth/auth_screen.dart';
-import '../chat/chat_screen.dart';
+
 
 
 class SplashScreen extends StatefulWidget {
@@ -19,13 +17,13 @@ class SplashScreen extends StatefulWidget {
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
 
-  // ── Animation controllers ─────────────────────────────
+  // ── Animation controllers 
   late final AnimationController _logoController;
   late final AnimationController _textController;
   late final AnimationController _pulseController;
   late final AnimationController _progressController;
 
-  // ── Animations ────────────────────────────────────────
+  // ── Animations 
   late final Animation<double> _logoScale;
   late final Animation<double> _logoOpacity;
   late final Animation<double> _textOpacity;
@@ -110,19 +108,14 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _navigate() {
     if (!mounted) return;
-    final auth = context.read<AuthProvider>();
-    Navigator.of(context).pushReplacement(
-      PageRouteBuilder(
-        pageBuilder: (_, animation, __) => auth.isAuthenticated
-            ? const ChatScreen()
-            : const AuthScreen(),
-        transitionsBuilder: (_, animation, __, child) => FadeTransition(
-          opacity: animation,
-          child:   child,
-        ),
-        transitionDuration: const Duration(milliseconds: 600),
-      ),
-    );
+  Navigator.of(context).pushReplacement(
+    PageRouteBuilder(
+      pageBuilder:        (_, animation, __) => const AuthGate(),
+      transitionsBuilder: (_, animation, __, child) =>
+          FadeTransition(opacity: animation, child: child),
+      transitionDuration: const Duration(milliseconds: 600),
+    ),
+  );
   }
 
   @override
@@ -147,7 +140,7 @@ class _SplashScreenState extends State<SplashScreen>
         ),
         child: Stack(
           children: [
-            // ── Decorative circles ─────────────────────────
+            // ── Decorative circles 
             Positioned(
               top:   -size.width * 0.25,
               right: -size.width * 0.2,
@@ -173,7 +166,7 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
-            // ── Main content ───────────────────────────────
+            // ── Main content 
             Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -203,7 +196,7 @@ class _SplashScreenState extends State<SplashScreen>
                       child:   Text(
                         AppConstants.appTagline,
                         style: AppTextStyles.bodyMedium.copyWith(
-                          color:       AppColors.white.withOpacity(0.80),
+                          color:       AppColors.white.withValues(alpha: 0.80),
                           letterSpacing: 0.3,
                         ),
                         textAlign: TextAlign.center,
@@ -226,7 +219,7 @@ class _SplashScreenState extends State<SplashScreen>
                     animation: _progressValue,
                     builder:   (_, __) => LinearProgressIndicator(
                       value:            _progressValue.value,
-                      backgroundColor:  AppColors.white.withOpacity(0.2),
+                      backgroundColor:  AppColors.white.withValues(alpha: 0.2),
                       valueColor:       const AlwaysStoppedAnimation<Color>(
                         AppColors.white,
                       ),
@@ -237,7 +230,7 @@ class _SplashScreenState extends State<SplashScreen>
                   Text(
                     'v${AppConstants.appVersion}',
                     style: AppTextStyles.labelSmall.copyWith(
-                      color: AppColors.white.withOpacity(0.5),
+                      color: AppColors.white.withValues(alpha: 0.5),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -265,7 +258,7 @@ class _DecorativeCircle extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: AppColors.white.withOpacity(opacity),
+          color: AppColors.white.withValues(alpha: opacity),
           width: 1.5,
         ),
       ),
