@@ -53,7 +53,8 @@ class _HistoryScreenState extends State<HistoryScreen>
   List<ChatSessionModel> _filtered(List<ChatSessionModel> sessions) {
     if (_query.isEmpty) return sessions;
     return sessions
-        .where((s) => s.title.toLowerCase().contains(_query) ||
+        .where((s) =>
+            s.title.toLowerCase().contains(_query) ||
             s.lastMessagePreview.toLowerCase().contains(_query))
         .toList();
   }
@@ -70,12 +71,19 @@ class _HistoryScreenState extends State<HistoryScreen>
     return map;
   }
 
-  void _openSession(ChatSessionModel session) {
-    context.read<ChatProvider>().loadSession(session);
+  // ── Open session — fixed: async + 2 args ──────────────
+  Future<void> _openSession(ChatSessionModel session) async {
+    await context.read<ChatProvider>().loadSession(
+          session,
+          context.read<HistoryProvider>(),
+        );
+
+    if (!mounted) return;
+
     Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder:        (_, a, __) => const ChatScreen(),
+        pageBuilder: (_, a, __) => const ChatScreen(),
         transitionsBuilder: (_, a, __, child) =>
             FadeTransition(opacity: a, child: child),
         transitionDuration: const Duration(milliseconds: 350),
@@ -90,7 +98,7 @@ class _HistoryScreenState extends State<HistoryScreen>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        title: const Text('Clear All History?'),
+        title:          const Text('Clear All History?'),
         titleTextStyle: AppTextStyles.headingSmall,
         content: Text(
           'Every conversation will be permanently deleted. '
@@ -153,7 +161,7 @@ class _HistoryScreenState extends State<HistoryScreen>
             if (!history.isEmpty)
               _StatsStrip(totalSessions: history.sessions.length),
 
-            // ── Content ─────────────────────────────────────
+            // ── Content ────────────────────────────────────
             Expanded(
               child: history.isLoading
                   ? const _LoadingState()
@@ -162,10 +170,10 @@ class _HistoryScreenState extends State<HistoryScreen>
                       : filtered.isEmpty
                           ? _NoResultsState(query: _query)
                           : _GroupedList(
-                              groups:   groups,
-                              grouped:  grouped,
-                              onTap:    _openSession,
-                              onDelete: (id) => context
+                              groups:      groups,
+                              grouped:     grouped,
+                              onTap:       _openSession,
+                              onDelete:    (id) => context
                                   .read<HistoryProvider>()
                                   .deleteSession(id),
                               activeChatId: context
@@ -185,7 +193,7 @@ class _HistoryScreenState extends State<HistoryScreen>
           Navigator.pushReplacement(
             context,
             PageRouteBuilder(
-              pageBuilder:        (_, a, __) => const ChatScreen(),
+              pageBuilder: (_, a, __) => const ChatScreen(),
               transitionsBuilder: (_, a, __, child) =>
                   FadeTransition(opacity: a, child: child),
               transitionDuration: const Duration(milliseconds: 350),
@@ -211,19 +219,19 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDark  = Theme.of(context).brightness == Brightness.dark;
-    final scheme  = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final scheme = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
       child: TextField(
-        controller:  controller,
+        controller: controller,
         style: AppTextStyles.bodyMedium.copyWith(
           color: scheme.onBackground,
         ),
         decoration: InputDecoration(
-          hintText:    'Search conversations...',
-          prefixIcon:  Icon(
+          hintText: 'Search conversations...',
+          prefixIcon: Icon(
             Icons.search_rounded,
             color: scheme.onBackground.withOpacity(0.4),
             size:  20,
@@ -234,15 +242,15 @@ class _SearchBar extends StatelessWidget {
                   child: Icon(
                     Icons.cancel_rounded,
                     color: scheme.onBackground.withOpacity(0.4),
-                    size: 18,
+                    size:  18,
                   ),
                 )
               : null,
-          filled:     true,
-          fillColor:  isDark
+          filled:    true,
+          fillColor: isDark
               ? AppColors.backgroundDark
               : AppColors.backgroundLight,
-          hintStyle:  AppTextStyles.bodyMedium.copyWith(
+          hintStyle: AppTextStyles.bodyMedium.copyWith(
             color: scheme.onBackground.withOpacity(0.38),
           ),
           contentPadding: const EdgeInsets.symmetric(
@@ -254,7 +262,7 @@ class _SearchBar extends StatelessWidget {
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide:   BorderSide(
+            borderSide: BorderSide(
               color: isDark
                   ? AppColors.dividerDark
                   : AppColors.dividerLight,
@@ -262,7 +270,7 @@ class _SearchBar extends StatelessWidget {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(16),
-            borderSide:   BorderSide(
+            borderSide: BorderSide(
               color: scheme.primary,
               width: 1.5,
             ),
@@ -296,7 +304,7 @@ class _StatsStrip extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(
+          const Icon(
             Icons.history_rounded,
             size:  16,
             color: AppColors.secondaryLight,
@@ -331,11 +339,11 @@ class _StatsStrip extends StatelessWidget {
 //  GROUPED LIST
 // ─────────────────────────────────────────────────────────
 class _GroupedList extends StatelessWidget {
-  final List<String>                        groups;
-  final Map<String, List<ChatSessionModel>> grouped;
-  final ValueChanged<ChatSessionModel>      onTap;
-  final ValueChanged<String>               onDelete;
-  final String?                            activeChatId;
+  final List<String>                              groups;
+  final Map<String, List<ChatSessionModel>>       grouped;
+  final Future<void> Function(ChatSessionModel)   onTap;     // ← async
+  final ValueChanged<String>                      onDelete;
+  final String?                                   activeChatId;
 
   const _GroupedList({
     required this.groups,
@@ -350,8 +358,8 @@ class _GroupedList extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
 
     return ListView.builder(
-      padding:     const EdgeInsets.only(bottom: 96),
-      itemCount:   groups.length,
+      padding:   const EdgeInsets.only(bottom: 96),
+      itemCount: groups.length,
       itemBuilder: (_, groupIdx) {
         final label    = groups[groupIdx];
         final sessions = grouped[label]!;
@@ -359,10 +367,10 @@ class _GroupedList extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Group header ─────────────────────────────────
+            // ── Group header ───────────────────────────────
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 6),
-              child:   Text(
+              child: Text(
                 label,
                 style: AppTextStyles.labelSmall.copyWith(
                   color:         scheme.onBackground.withOpacity(0.45),
@@ -371,12 +379,12 @@ class _GroupedList extends StatelessWidget {
               ),
             ),
 
-            // ── Sessions in group ────────────────────────────
+            // ── Sessions in group ──────────────────────────
             ...sessions.map(
               (session) => HistoryTile(
                 session:  session,
                 isActive: session.id == activeChatId,
-                onTap:    () => onTap(session),
+                onTap:    () => onTap(session),   // fires async safely
                 onDelete: () => onDelete(session.id),
               ),
             ),
@@ -388,7 +396,7 @@ class _GroupedList extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────
-//  STATE WIDGETS
+//  LOADING STATE — shimmer tiles
 // ─────────────────────────────────────────────────────────
 class _LoadingState extends StatelessWidget {
   const _LoadingState();
@@ -451,11 +459,13 @@ class _ShimmerTileState extends State<_ShimmerTile>
           children: [
             // Icon placeholder
             Container(
-              width:  36, height: 36,
+              width:  36,
+              height: 36,
               decoration: BoxDecoration(
                 color: (isDark
-                    ? AppColors.dividerDark
-                    : AppColors.dividerLight).withOpacity(_anim.value),
+                        ? AppColors.dividerDark
+                        : AppColors.dividerLight)
+                    .withOpacity(_anim.value),
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
@@ -464,24 +474,28 @@ class _ShimmerTileState extends State<_ShimmerTile>
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Title placeholder
                   Container(
                     height: 12,
                     width:  double.infinity,
                     decoration: BoxDecoration(
                       color: (isDark
-                          ? AppColors.dividerDark
-                          : AppColors.dividerLight).withOpacity(_anim.value),
+                              ? AppColors.dividerDark
+                              : AppColors.dividerLight)
+                          .withOpacity(_anim.value),
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ),
                   const SizedBox(height: 6),
+                  // Subtitle placeholder
                   Container(
                     height: 10,
                     width:  160,
                     decoration: BoxDecoration(
                       color: (isDark
-                          ? AppColors.dividerDark
-                          : AppColors.dividerLight).withOpacity(_anim.value * 0.6),
+                              ? AppColors.dividerDark
+                              : AppColors.dividerLight)
+                          .withOpacity(_anim.value * 0.6),
                       borderRadius: BorderRadius.circular(6),
                     ),
                   ),
@@ -495,6 +509,9 @@ class _ShimmerTileState extends State<_ShimmerTile>
   }
 }
 
+// ─────────────────────────────────────────────────────────
+//  FULL EMPTY STATE
+// ─────────────────────────────────────────────────────────
 class _FullEmptyState extends StatelessWidget {
   const _FullEmptyState();
 
@@ -505,7 +522,7 @@ class _FullEmptyState extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
-        child:   Column(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
@@ -543,6 +560,9 @@ class _FullEmptyState extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────
+//  NO RESULTS STATE
+// ─────────────────────────────────────────────────────────
 class _NoResultsState extends StatelessWidget {
   final String query;
   const _NoResultsState({required this.query});
@@ -554,7 +574,7 @@ class _NoResultsState extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40),
-        child:   Column(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(

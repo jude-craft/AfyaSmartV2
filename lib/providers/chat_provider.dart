@@ -1,6 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../core/services/api_service.dart';
+import '../core/services/web_socket_service.dart';
+import '../models/chat_session.dart';
 import '../models/message_model.dart';
 
 import 'history_provider.dart';
