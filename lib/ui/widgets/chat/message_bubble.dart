@@ -6,6 +6,16 @@ import '../../../core/theme/app_text_style.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../models/message_model.dart';
 
+
+  String _cleanText(String text) {
+    return text
+      .replaceAll(RegExp(r'\*\*(.+?)\*\*'), r'$1') // **bold** → bold
+      .replaceAll(RegExp(r'\*(.+?)\*'),     r'$1') // *italic* → italic
+      .replaceAll('##', '')                         // ## headings
+      .replaceAll('# ',  '')                        // # headings
+      .trim();
+    }
+
 class MessageBubble extends StatelessWidget {
   final MessageModel message;
   final bool         showTimestamp;
@@ -24,19 +34,22 @@ class MessageBubble extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────
 //  USER BUBBLE
-// ─────────────────────────────────────────────────────────
 class _UserBubble extends StatelessWidget {
   final MessageModel message;
   final bool         showTimestamp;
+
+
 
   const _UserBubble({required this.message, required this.showTimestamp});
 
   @override
   Widget build(BuildContext context) {
-    final scheme  = Theme.of(context).colorScheme;
 
+  
+
+    final scheme  = Theme.of(context).colorScheme;
+    
     return Padding(
       padding: const EdgeInsets.only(left: 64, right: 16, top: 4, bottom: 4),
       child: Column(
@@ -59,14 +72,14 @@ class _UserBubble extends StatelessWidget {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color:      scheme.primary.withOpacity(0.25),
+                    color:      scheme.primary.withValues(alpha: 0.25),
                     blurRadius: 8,
                     offset:     const Offset(0, 2),
                   ),
                 ],
               ),
               child: Text(
-                message.content,
+                _cleanText(message.content), 
                 style: AppTextStyles.bodyMedium.copyWith(
                   color:  AppColors.white,
                   height: 1.5,
@@ -84,7 +97,7 @@ class _UserBubble extends StatelessWidget {
                 Text(
                   DateFormatter.messageTime(message.timestamp),
                   style: AppTextStyles.labelSmall.copyWith(
-                    color: scheme.onBackground.withOpacity(0.4),
+                    color: scheme.onBackground.withValues(alpha:0.4),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -107,9 +120,7 @@ class _UserBubble extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────
 //  AI BUBBLE
-// ─────────────────────────────────────────────────────────
 class _AiBubble extends StatelessWidget {
   final MessageModel message;
   final bool         showTimestamp;
@@ -158,7 +169,7 @@ class _AiBubble extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      message.content,
+                      _cleanText(message.content),
                       style: AppTextStyles.bodyMedium.copyWith(
                         color:  scheme.onBackground,
                         height: 1.6,

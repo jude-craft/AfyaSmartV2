@@ -3,6 +3,14 @@ import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_style.dart';
 
+String _cleanText(String text) {
+  return text
+      .replaceAll(RegExp(r'\*\*(.+?)\*\*'), r'$1') // **bold** → bold
+      .replaceAll(RegExp(r'\*(.+?)\*'),     r'$1') // *italic* → italic
+      .replaceAll('##', '')                         // ## headings
+      .replaceAll('# ',  '')                        // # headings
+      .trim();
+}
 class DiagnosisCard extends StatefulWidget {
   final String   content;
   final VoidCallback onStartNewChat;
@@ -60,14 +68,14 @@ class _DiagnosisCardState extends State<DiagnosisCard>
               color: isDark ? AppColors.surfaceDark : AppColors.white,
               borderRadius: BorderRadius.circular(20),
               border: Border.all(
-                color: AppColors.secondaryLight.withOpacity(0.4),
+                color: AppColors.secondaryLight.withValues(alpha: 0.4),
                 width: 1.5,
               ),
               boxShadow: isDark
                   ? []
                   : [
                       BoxShadow(
-                        color:      AppColors.secondaryLight.withOpacity(0.12),
+                        color:      AppColors.secondaryLight.withValues(alpha: 0.12),
                         blurRadius: 16,
                         offset:     const Offset(0, 4),
                       ),
@@ -132,7 +140,7 @@ class _DiagnosisCardState extends State<DiagnosisCard>
                             Text(
                               'AI-generated · Not a medical prescription',
                               style: AppTextStyles.labelSmall.copyWith(
-                                color: scheme.onBackground.withOpacity(0.45),
+                                color: scheme.onBackground.withValues(alpha: 0.45),
                               ),
                             ),
                           ],
@@ -147,14 +155,14 @@ class _DiagnosisCardState extends State<DiagnosisCard>
                           _expanded
                               ? Icons.keyboard_arrow_up_rounded
                               : Icons.keyboard_arrow_down_rounded,
-                          color: scheme.onBackground.withOpacity(0.4),
+                          color: scheme.onBackground.withValues(alpha: 0.4),
                         ),
                       ),
                     ],
                   ),
                 ),
 
-                // ── Body ─────────────────────────────────────
+                // ── Body 
                 AnimatedCrossFade(
                   duration:     const Duration(milliseconds: 250),
                   crossFadeState: _expanded
@@ -175,9 +183,7 @@ class _DiagnosisCardState extends State<DiagnosisCard>
   }
 }
 
-// ─────────────────────────────────────────────────────────
 //  CARD BODY
-// ─────────────────────────────────────────────────────────
 class _CardBody extends StatelessWidget {
   final String       content;
   final VoidCallback onStartNewChat;
@@ -197,16 +203,16 @@ class _CardBody extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-          // ── Disclaimer banner ─────────────────────────
+          // ── Disclaimer banner 
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: 12, vertical: 8,
             ),
             decoration: BoxDecoration(
-              color:        AppColors.error.withOpacity(0.06),
+              color:        AppColors.error.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: AppColors.error.withOpacity(0.2),
+                color: AppColors.error.withValues(alpha: 0.2),
               ),
             ),
             child: Row(
@@ -222,7 +228,7 @@ class _CardBody extends StatelessWidget {
                     'This is general health information only. '
                     'Please consult a qualified doctor.',
                     style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.error.withOpacity(0.85),
+                      color: AppColors.error.withValues(alpha: 0.85),
                     ),
                   ),
                 ),
@@ -232,9 +238,9 @@ class _CardBody extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // ── Diagnosis content ─────────────────────────
+          // ── Diagnosis content 
           Text(
-            content,
+            _cleanText(content),
             style: AppTextStyles.bodyMedium.copyWith(
               color:  scheme.onBackground,
               height: 1.65,
@@ -247,7 +253,7 @@ class _CardBody extends StatelessWidget {
 
           const SizedBox(height: 14),
 
-          // ── Action row ────────────────────────────────
+          // ── Action row 
           Row(
             children: [
               // Copy button
@@ -256,7 +262,7 @@ class _CardBody extends StatelessWidget {
                   icon:  Icons.copy_rounded,
                   label: 'Copy',
                   onTap: () {
-                    Clipboard.setData(ClipboardData(text: content));
+                    Clipboard.setData(ClipboardData(text:_cleanText(content)));
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content:  Text('Diagnosis copied'),
@@ -340,12 +346,12 @@ class _ActionBtn extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 16, color: scheme.onBackground.withOpacity(0.6)),
+            Icon(icon, size: 16, color: scheme.onBackground.withValues(alpha: 0.6)),
             const SizedBox(width: 6),
             Text(
               label,
               style: AppTextStyles.labelMedium.copyWith(
-                color: scheme.onBackground.withOpacity(0.7),
+                color: scheme.onBackground.withValues(alpha: 0.7),
               ),
             ),
           ],

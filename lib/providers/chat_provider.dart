@@ -8,7 +8,7 @@ import '../models/message_model.dart';
 
 import 'history_provider.dart';
 
-// ── Chat modes ────────────────────────────────────────────
+// ── Chat modes 
 enum ChatMode { freeChat, symptomChecker }
 
 // ── Symptom session stages (mirrors backend) ──────────────
@@ -25,7 +25,7 @@ class ChatProvider extends ChangeNotifier {
 
   HistoryProvider? _historyProvider;
 
-  // ── Core state ────────────────────────────────────────
+  // ── Core state 
   List<MessageModel> _messages         = [];
   ChatSessionModel?  _activeSession;
   bool               _isTyping         = false;
@@ -35,12 +35,12 @@ class ChatProvider extends ChangeNotifier {
   String             _streamBuffer     = '';
   String?            _currentSessionId;
 
-  // ── Mode & stage ──────────────────────────────────────
+  // ── Mode & stage 
   ChatMode?    _chatMode;       // null = not selected yet (empty state)
   SymptomStage _symptomStage   = SymptomStage.collecting;
   Map<String, dynamic>? _diagnosisData; // holds last diagnosis payload
 
-  // ── Getters ───────────────────────────────────────────
+  // ── Getters 
   List<MessageModel>    get messages         => List.unmodifiable(_messages);
   ChatSessionModel?     get activeSession    => _activeSession;
   bool                  get isTyping         => _isTyping;
@@ -60,7 +60,7 @@ class ChatProvider extends ChangeNotifier {
   WsConnectionState     get wsState          => _ws.state;
   String?               get currentSessionId => _currentSessionId;
 
-  // ── Firebase helpers ──────────────────────────────────
+  // ── Firebase helpers 
   User?  get _fbUser => FirebaseAuth.instance.currentUser;
   String get _uid    => _fbUser?.uid         ?? '';
   String get _email  => _fbUser?.email       ?? '';
@@ -68,9 +68,7 @@ class ChatProvider extends ChangeNotifier {
 
   void setHistoryProvider(HistoryProvider p) => _historyProvider = p;
 
-  // ─────────────────────────────────────────────────────
   //  Select mode from empty state
-  // ─────────────────────────────────────────────────────
   void selectMode(ChatMode mode) {
     _chatMode         = mode;
     _symptomStage     = SymptomStage.collecting;
@@ -83,9 +81,7 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ─────────────────────────────────────────────────────
   //  Start fresh (clears mode too → back to empty state)
-  // ─────────────────────────────────────────────────────
   void startNewChat() {
     _chatMode         = null;
     _messages         = [];
@@ -102,41 +98,53 @@ class ChatProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ─────────────────────────────────────────────────────
   //  Load session from history
-  // ─────────────────────────────────────────────────────
-  Future<void> loadSession(
-    ChatSessionModel session,
-    HistoryProvider historyProvider,
-  ) async {
-    _ws.disconnect();
-    _isLoadingSession = true;
-    _activeSession    = session;
-    _currentSessionId = session.id;
-    _messages         = [];
-    _errorMessage     = null;
-    _chatMode         = ChatMode.freeChat; // history sessions default to free
-    _symptomStage     = SymptomStage.collecting;
-    _diagnosisData    = null;
-    notifyListeners();
+Future<void> loadSession(
+  ChatSessionModel session,
+  HistoryProvider historyProvider,
+) async {
+  _ws.disconnect();
 
-    try {
-      final hydrated =
-          await historyProvider.fetchSessionMessages(session.id);
-      if (hydrated != null) {
-        _activeSession = hydrated;
-        _messages      = List.from(hydrated.messages);
-      } else {
-        _messages = List.from(session.messages);
-      }
-    } catch (_) {
-      _errorMessage = 'Could not load messages.';
-      _messages     = List.from(session.messages);
-    } finally {
-      _isLoadingSession = false;
-      notifyListeners();
+  _isLoadingSession = true;
+  _activeSession    = session;
+  _currentSessionId = session.id;   
+  _messages         = [];
+  _errorMessage     = null;
+
+
+  _chatMode         = ChatMode.freeChat;
+  _symptomStage     = SymptomStage.collecting;
+  _diagnosisData    = null;
+  _isTyping         = false;
+  _isStreaming      = false;
+  notifyListeners();
+
+  try {
+    final hydrated =
+        await historyProvider.fetchSessionMessages(session.id);
+    if (hydrated != null) {
+      _activeSession = hydrated;
+      _messages      = List.from(hydrated.messages);
+    } else {
+      _messages = List.from(session.messages);
     }
+  } catch (_) {
+    _errorMessage = 'Could not load messages.';
+    _messages     = List.from(session.messages);
+  } finally {
+    _isLoadingSession = false;
+
+  
+    if (_uid.isNotEmpty) {
+      _ws.connect(
+        sessionId:   _currentSessionId!,
+        firebaseUid: _uid,
+      );
+    }
+
+    notifyListeners();
   }
+}
 
   // ─────────────────────────────────────────────────────
   //  Send message (router)
@@ -156,41 +164,74 @@ class ChatProvider extends ChangeNotifier {
   // ─────────────────────────────────────────────────────
   //  WebSocket — free chat
   // ─────────────────────────────────────────────────────
-  Future<void> _sendViaWebSocket(String content) async {
-    _ensureSessionId();
+Future<void> _sendViaWebSocket(String content) async {
+  _ensureSessionId();
 
-    if (!_ws.isConnected) {
-      await _ws.connect(
-        sessionId:   _currentSessionId!,
-        firebaseUid: _uid,
-      );
-    }
-
-    if (!_ws.isConnected) {
-      await _sendViaHttp(content);
-      return;
-    }
-
-    final streamId = _uuid.v4();
-    _addStreamingBubble(streamId);
-    _streamBuffer = '';
-
-    _ws.onChunk = (chunk) {
-      _streamBuffer += chunk;
-      _updateStreamingBubble(streamId, _streamBuffer);
-    };
-    _ws.onDone = () {
-      _finaliseStreamingBubble(streamId, _streamBuffer);
-      _clearWsCallbacks();
-    };
-    _ws.onError = (error) {
-      _removeStreamingBubble(streamId);
-      _setError(error);
-      _clearWsCallbacks();
-    };
-
-    _ws.sendMessage(content);
+  if (!_ws.isConnected) {
+    await _ws.connect(
+      sessionId:   _currentSessionId!,
+      firebaseUid: _uid,
+    );
   }
+
+  if (!_ws.isConnected) {
+    await _sendViaHttp(content);
+    return;
+  }
+
+  // ── Show typing indicator only (no empty bubble yet) ──
+  _isTyping    = true;
+  _isStreaming = false;
+  _streamBuffer = '';
+  notifyListeners();
+
+  String?  streamId;   // created on first chunk
+  bool     firstChunk = true;
+
+  _ws.onChunk = (chunk) {
+    if (firstChunk) {
+      firstChunk = false;
+
+      // ── First chunk arrived — stop "thinking" ─────────
+      // Replace typing indicator with a real streaming bubble
+      _isTyping = false;
+      streamId  = _uuid.v4();
+      _messages.add(MessageModel.assistant(
+        id:      streamId!,
+        content: '',
+        status:  MessageStatus.sending,
+      ));
+    }
+
+    _streamBuffer += chunk;
+    _updateStreamingBubble(streamId!, _streamBuffer);
+  };
+
+  _ws.onDone = () {
+    if (streamId != null) {
+      _finaliseStreamingBubble(streamId!, _streamBuffer);
+    } else {
+      // [DONE] arrived but no chunks — clear typing
+      _isTyping    = false;
+      _isStreaming = false;
+      notifyListeners();
+    }
+    _clearWsCallbacks();
+  };
+
+  _ws.onError = (error) {
+    if (streamId != null) {
+      _removeStreamingBubble(streamId!);
+    } else {
+      _isTyping = false;
+      notifyListeners();
+    }
+    _setError(error);
+    _clearWsCallbacks();
+  };
+
+  _ws.sendMessage(content);
+}
 
   // ─────────────────────────────────────────────────────
   //  HTTP fallback — free chat

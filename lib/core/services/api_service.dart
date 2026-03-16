@@ -5,16 +5,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 class ApiService {
   ApiService._();
 
-  // ── Base URLs — update when forwarding port ───────────
-  // Android emulator  → http://10.0.2.2:8000
-  // Physical device   → http://YOUR_LOCAL_IP:8000
-  // ngrok             → https://xxxx.ngrok.io
-  static const String _baseUrl  = 'http://10.0.2.2:8000';
+
+  static const String _baseUrl = 'https://afyasmart-api-btavd.ondigitalocean.app/api/v1';
   static const Duration _timeout = Duration(seconds: 30);
 
-  // ─────────────────────────────────────────────────────
   //  Headers
-  // ─────────────────────────────────────────────────────
   static Future<Map<String, String>> _headers() async {
     final token = await FirebaseAuth.instance.currentUser?.getIdToken();
     return {
@@ -23,9 +18,7 @@ class ApiService {
     };
   }
 
-  // ─────────────────────────────────────────────────────
   //  POST /chat — free chat
-  // ─────────────────────────────────────────────────────
   static Future<Map<String, dynamic>> sendChat({
     required String message,
     required String firebaseUid,
@@ -51,9 +44,7 @@ class ApiService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
-  // ─────────────────────────────────────────────────────
   //  POST /symptoms — symptom checker
-  // ─────────────────────────────────────────────────────
   static Future<Map<String, dynamic>> sendSymptoms({
     required String message,
     required String firebaseUid,
@@ -79,9 +70,7 @@ class ApiService {
     return jsonDecode(response.body) as Map<String, dynamic>;
   }
 
-  // ─────────────────────────────────────────────────────
   //  GET /sessions/{firebase_uid} — fetch session list
-  // ─────────────────────────────────────────────────────
   static Future<List<Map<String, dynamic>>> fetchSessions(
     String firebaseUid,
   ) async {
@@ -106,9 +95,7 @@ class ApiService {
     return [];
   }
 
-  // ─────────────────────────────────────────────────────
   //  GET /history/{session_id}/messages — fetch messages
-  // ─────────────────────────────────────────────────────
   static Future<List<Map<String, dynamic>>> fetchMessages(
     String sessionId,
   ) async {
@@ -133,9 +120,7 @@ class ApiService {
     return [];
   }
 
-  // ─────────────────────────────────────────────────────
   //  DELETE /chat/{session_id} — delete a session
-  // ─────────────────────────────────────────────────────
   static Future<bool> deleteSession(String sessionId) async {
     final response = await http
         .delete(
@@ -148,9 +133,7 @@ class ApiService {
     return response.statusCode == 200 || response.statusCode == 204;
   }
 
-  // ─────────────────────────────────────────────────────
   //  Assert helper
-  // ─────────────────────────────────────────────────────
   static void _assertOk(http.Response response, String context) {
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw ApiException(
