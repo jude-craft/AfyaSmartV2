@@ -48,10 +48,11 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  Future<void> _sendMessage(String text) async {
-    await context.read<ChatProvider>().sendMessage(text);
-    _scrollToBottom();
-  }
+Future<void> _sendMessage(String text) async {
+  FocusScope.of(context).unfocus();  
+  await context.read<ChatProvider>().sendMessage(text);
+  _scrollToBottom();
+}
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +70,6 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: _buildAppBar(context, isDark, chat),
       body:   Column(
         children: [
-          // ── Message list / empty state ─────────────────
           Expanded(
             child: _MessageList(
               scrollController: _scrollController,
@@ -77,14 +77,11 @@ class _ChatScreenState extends State<ChatScreen> {
             ),
           ),
 
-          // ── Bottom input area ──────────────────────────
           if (chat.modeSelected) ...[
-            // Sex selector replaces input bar when backend asks
             if (chat.isAskingSex)
               SexSelectorBar(
                 onSelect: (value) => _sendMessage(value),
               )
-            // Diagnosis card replaces input bar when diagnosed
             else if (chat.isDiagnosed)
               _DiagnosisFooter(
                 onNewChat: () {
@@ -92,7 +89,6 @@ class _ChatScreenState extends State<ChatScreen> {
                   _scrollToBottom(animated: false);
                 },
               )
-            // Normal input bar
             else
               ChatInputBar(
                 onSend:       _sendMessage,
@@ -147,10 +143,6 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 }
-
-// ─────────────────────────────────────────────────────────
-//  MODE BADGE (shown in AppBar when mode is selected)
-// ─────────────────────────────────────────────────────────
 class _ModeBadge extends StatelessWidget {
   final bool isSymptom;
   const _ModeBadge({required this.isSymptom});
@@ -164,9 +156,9 @@ class _ModeBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
       decoration: BoxDecoration(
-        color:        color.withOpacity(0.10),
+        color:        color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha:0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -189,9 +181,7 @@ class _ModeBadge extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────
-//  MESSAGE LIST
-// ─────────────────────────────────────────────────────────
+
 class _MessageList extends StatelessWidget {
   final ScrollController scrollController;
   final VoidCallback     onScrollToBottom;
@@ -367,7 +357,7 @@ class _EmptyStateState extends State<_EmptyState>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
 
-              // ── Logo badge ─────────────────────────────
+              // ── Logo badge 
               Container(
                 width:  48,
                 height: 48,
@@ -389,7 +379,7 @@ class _EmptyStateState extends State<_EmptyState>
 
               const SizedBox(height: 20),
 
-              // ── Greeting ───────────────────────────────
+              // ── Greeting 
               Text(
                 _getGreeting(auth.user?.firstName),
                 style: AppTextStyles.displayMedium.copyWith(
@@ -404,24 +394,24 @@ class _EmptyStateState extends State<_EmptyState>
               Text(
                 _getDynamicSubtitle(),
                 style: AppTextStyles.bodyLarge.copyWith(
-                  color: scheme.onBackground.withOpacity(0.5),
+                  color: scheme.onBackground.withValues(alpha:0.5),
                 ),
               ),
 
               const SizedBox(height: 36),
 
-              // ── Section label ──────────────────────────
+              // ── Section label 
               Text(
                 'HOW WOULD YOU LIKE TO START?',
                 style: AppTextStyles.labelSmall.copyWith(
-                  color:         scheme.onBackground.withOpacity(0.4),
+                  color:         scheme.onBackground.withValues(alpha: 0.4),
                   letterSpacing: 0.9,
                 ),
               ),
 
               const SizedBox(height: 14),
 
-              // ── Mode cards ─────────────────────────────
+              // ── Mode cards 
               _ModeCard(
                 emoji:    '💬',
                 title:    'Free Chat',
@@ -458,14 +448,14 @@ class _EmptyStateState extends State<_EmptyState>
 
               const SizedBox(height: 28),
 
-              // ── Disclaimer ─────────────────────────────
+              // ── Disclaimer 
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Icon(
                     Icons.info_outline_rounded,
                     size:  13,
-                    color: scheme.onBackground.withOpacity(0.3),
+                    color: scheme.onBackground.withValues(alpha: 0.3),
                   ),
                   const SizedBox(width: 6),
                   Expanded(
@@ -473,7 +463,7 @@ class _EmptyStateState extends State<_EmptyState>
                       'AfyaSmart provides general health information only. '
                       'Always consult a qualified healthcare professional.',
                       style: AppTextStyles.bodySmall.copyWith(
-                        color:  scheme.onBackground.withOpacity(0.35),
+                        color:  scheme.onBackground.withValues(alpha: 0.35),
                         height: 1.5,
                       ),
                     ),
@@ -488,9 +478,7 @@ class _EmptyStateState extends State<_EmptyState>
   }
 }
 
-// ─────────────────────────────────────────────────────────
 //  MODE CARD
-// ─────────────────────────────────────────────────────────
 class _ModeCard extends StatefulWidget {
   final String       emoji;
   final String       title;
@@ -555,14 +543,14 @@ class _ModeCardState extends State<_ModeCard>
             color: isDark ? AppColors.surfaceDark : AppColors.white,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: widget.color.withOpacity(0.25),
+              color: widget.color.withValues(alpha: 0.25),
               width: 1.5,
             ),
             boxShadow: isDark
                 ? []
                 : [
                     BoxShadow(
-                      color:      widget.color.withOpacity(0.07),
+                      color:      widget.color.withValues(alpha: 0.07),
                       blurRadius: 16,
                       offset:     const Offset(0, 4),
                     ),
@@ -571,12 +559,12 @@ class _ModeCardState extends State<_ModeCard>
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── Icon ──────────────────────────────────
+              // ── Icon 
               Container(
                 width:  52,
                 height: 52,
                 decoration: BoxDecoration(
-                  color:        widget.color.withOpacity(0.10),
+                  color:        widget.color.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Center(
@@ -588,7 +576,7 @@ class _ModeCardState extends State<_ModeCard>
               ),
               const SizedBox(width: 14),
 
-              // ── Text block ─────────────────────────────
+              // ── Text block 
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -614,7 +602,7 @@ class _ModeCardState extends State<_ModeCard>
                     Text(
                       widget.subtitle,
                       style: AppTextStyles.bodySmall.copyWith(
-                        color:  scheme.onBackground.withOpacity(0.5),
+                        color:  scheme.onBackground.withValues(alpha: 0.5),
                         height: 1.5,
                       ),
                     ),

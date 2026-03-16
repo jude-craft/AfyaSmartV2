@@ -49,7 +49,7 @@ class HistoryTile extends StatelessWidget {
         content: Text(
           'This conversation will be permanently deleted.',
           style: AppTextStyles.bodyMedium.copyWith(
-            color: Theme.of(context).colorScheme.onBackground.withOpacity(0.6),
+            color: Theme.of(context).colorScheme.onBackground.withValues(alpha: 0.6),
           ),
         ),
         actions: [
@@ -107,7 +107,7 @@ class _TileContent extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             border: isActive
                 ? Border.all(
-                    color: scheme.primary.withOpacity(0.3),
+                    color: scheme.primary.withValues(alpha: 0.3),
                     width: 1,
                   )
                 : null,
@@ -120,7 +120,7 @@ class _TileContent extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   color: isActive
-                      ? scheme.primary.withOpacity(0.15)
+                      ? scheme.primary.withValues(alpha:0.15)
                       : (isDark
                           ? AppColors.dividerDark
                           : AppColors.dividerLight),
@@ -131,7 +131,7 @@ class _TileContent extends StatelessWidget {
                   size:  18,
                   color: isActive
                       ? scheme.primary
-                      : scheme.onBackground.withOpacity(0.45),
+                      : scheme.onBackground.withValues(alpha: 0.45),
                 ),
               ),
               const SizedBox(width: 12),
@@ -158,7 +158,7 @@ class _TileContent extends StatelessWidget {
                     Text(
                       session.lastMessagePreview,
                       style: AppTextStyles.bodySmall.copyWith(
-                        color: scheme.onBackground.withOpacity(0.45),
+                        color: scheme.onBackground.withValues(alpha: 0.45),
                       ),
                       maxLines:  1,
                       overflow:  TextOverflow.ellipsis,
@@ -174,26 +174,9 @@ class _TileContent extends StatelessWidget {
                   Text(
                     DateFormatter.chatDate(session.updatedAt),
                     style: AppTextStyles.labelSmall.copyWith(
-                      color: scheme.onBackground.withOpacity(0.35),
+                      color: scheme.onBackground.withValues(alpha: 0.35),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${session.messageCount}',
-                    style: AppTextStyles.labelSmall.copyWith(
-                      color:      AppColors.white,
-                      fontSize:   9,
-                    ),
-                  ).let((child) => Container(
-                    padding:     const EdgeInsets.symmetric(
-                      horizontal: 5, vertical: 1,
-                    ),
-                    decoration:  BoxDecoration(
-                      color:        scheme.primary.withOpacity(0.7),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: child,
-                  )),
                 ],
               ),
             ],
@@ -229,7 +212,7 @@ class _TileContent extends StatelessWidget {
               margin: const EdgeInsets.only(bottom: 12),
               decoration: BoxDecoration(
                 color: Theme.of(context)
-                    .colorScheme.onBackground.withOpacity(0.15),
+                    .colorScheme.onBackground.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -285,9 +268,7 @@ class _TileContent extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────
 //  SWIPE BACKGROUND
-// ─────────────────────────────────────────────────────────
 class _SwipeBackground extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -318,7 +299,3 @@ class _SwipeBackground extends StatelessWidget {
   }
 }
 
-// ── Extension helper ──────────────────────────────────────
-extension _WidgetLet on Widget {
-  Widget let(Widget Function(Widget) fn) => fn(this);
-}
