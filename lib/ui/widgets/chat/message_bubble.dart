@@ -1,20 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_constants.dart';
 import '../../../core/theme/app_text_style.dart';
 import '../../../core/utils/date_formatter.dart';
 import '../../../models/message_model.dart';
-
-
-  String _cleanText(String text) {
-    return text
-      .replaceAll(RegExp(r'\*\*(.+?)\*\*'), r'$1') // **bold** → bold
-      .replaceAll(RegExp(r'\*(.+?)\*'),     r'$1') // *italic* → italic
-      .replaceAll('##', '')                         // ## headings
-      .replaceAll('# ',  '')                        // # headings
-      .trim();
-    }
 
 class MessageBubble extends StatelessWidget {
   final MessageModel message;
@@ -39,17 +30,12 @@ class _UserBubble extends StatelessWidget {
   final MessageModel message;
   final bool         showTimestamp;
 
-
-
   const _UserBubble({required this.message, required this.showTimestamp});
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
 
-  
-
-    final scheme  = Theme.of(context).colorScheme;
-    
     return Padding(
       padding: const EdgeInsets.only(left: 64, right: 16, top: 4, bottom: 4),
       child: Column(
@@ -79,7 +65,7 @@ class _UserBubble extends StatelessWidget {
                 ],
               ),
               child: Text(
-                _cleanText(message.content), 
+                message.content,
                 style: AppTextStyles.bodyMedium.copyWith(
                   color:  AppColors.white,
                   height: 1.5,
@@ -97,7 +83,7 @@ class _UserBubble extends StatelessWidget {
                 Text(
                   DateFormatter.messageTime(message.timestamp),
                   style: AppTextStyles.labelSmall.copyWith(
-                    color: scheme.onBackground.withValues(alpha:0.4),
+                    color: scheme.onSurface.withValues(alpha: 0.4),
                   ),
                 ),
                 const SizedBox(width: 4),
@@ -120,7 +106,7 @@ class _UserBubble extends StatelessWidget {
   }
 }
 
-//  AI BUBBLE
+//  AI BUBBLE — renders markdown
 class _AiBubble extends StatelessWidget {
   final MessageModel message;
   final bool         showTimestamp;
@@ -131,6 +117,7 @@ class _AiBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final scheme = Theme.of(context).colorScheme;
+    final textColor = scheme.onSurface;
 
     return Padding(
       padding: const EdgeInsets.only(left: 16, right: 64, top: 4, bottom: 4),
@@ -168,11 +155,13 @@ class _AiBubble extends StatelessWidget {
                             : AppColors.dividerLight,
                       ),
                     ),
-                    child: Text(
-                      _cleanText(message.content),
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color:  scheme.onBackground,
-                        height: 1.6,
+                    child: MarkdownBody(
+                      data: message.content,
+                      selectable: true,
+                      shrinkWrap: true,
+                      softLineBreak: true,
+                      styleSheet: _buildMarkdownStyle(
+                        context, isDark, textColor,
                       ),
                     ),
                   ),
@@ -184,7 +173,7 @@ class _AiBubble extends StatelessWidget {
                     '${AppConstants.aiName} · '
                     '${DateFormatter.messageTime(message.timestamp)}',
                     style: AppTextStyles.labelSmall.copyWith(
-                      color: scheme.onBackground.withOpacity(0.4),
+                      color: scheme.onSurface.withValues(alpha: 0.4),
                     ),
                   ),
                 ],
@@ -193,6 +182,121 @@ class _AiBubble extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  /// Builds a themed MarkdownStyleSheet that matches the app design.
+  MarkdownStyleSheet _buildMarkdownStyle(
+    BuildContext context,
+    bool isDark,
+    Color textColor,
+  ) {
+    final codeBackground = isDark
+        ? const Color(0xFF2D333B)
+        : const Color(0xFFF0F2F5);
+    final codeBorder = isDark
+        ? const Color(0xFF444C56)
+        : const Color(0xFFD0D7DE);
+
+    return MarkdownStyleSheet(
+      // ── Body text ───────────────────────────────────
+      p: AppTextStyles.bodyMedium.copyWith(
+        color:  textColor,
+        height: 1.6,
+      ),
+
+      // ── Bold & italic ──────────────────────────────
+      strong: AppTextStyles.bodyMedium.copyWith(
+        color:      textColor,
+        fontWeight: FontWeight.w700,
+        height:     1.6,
+      ),
+      em: AppTextStyles.bodyMedium.copyWith(
+        color:     textColor,
+        fontStyle: FontStyle.italic,
+        height:    1.6,
+      ),
+
+      // ── Headings ───────────────────────────────────
+      h1: AppTextStyles.headingLarge.copyWith(color: textColor),
+      h2: AppTextStyles.headingMedium.copyWith(color: textColor),
+      h3: AppTextStyles.headingSmall.copyWith(color: textColor),
+      h4: AppTextStyles.bodyLarge.copyWith(
+        color: textColor, fontWeight: FontWeight.w600,
+      ),
+      h5: AppTextStyles.bodyMedium.copyWith(
+        color: textColor, fontWeight: FontWeight.w600,
+      ),
+      h6: AppTextStyles.bodySmall.copyWith(
+        color: textColor, fontWeight: FontWeight.w600,
+      ),
+
+      // ── Lists ──────────────────────────────────────
+      listBullet: AppTextStyles.bodyMedium.copyWith(
+        color:  textColor,
+        height: 1.6,
+      ),
+      listBulletPadding: const EdgeInsets.only(right: 8),
+      listIndent: 16,
+
+      // ── Inline code ────────────────────────────────
+      code: AppTextStyles.bodySmall.copyWith(
+        color:            isDark ? const Color(0xFFE6EDF3) : const Color(0xFF24292F),
+        backgroundColor:  codeBackground,
+        fontFamily:       'monospace',
+        fontSize:         12.5,
+      ),
+
+      // ── Code block ─────────────────────────────────
+      codeblockDecoration: BoxDecoration(
+        color:        codeBackground,
+        borderRadius: BorderRadius.circular(8),
+        border:       Border.all(color: codeBorder),
+      ),
+      codeblockPadding: const EdgeInsets.all(12),
+
+      // ── Block quote ────────────────────────────────
+      blockquoteDecoration: BoxDecoration(
+        border: Border(
+          left: BorderSide(
+            color: AppColors.primaryLight.withValues(alpha: 0.5),
+            width: 3,
+          ),
+        ),
+      ),
+      blockquotePadding: const EdgeInsets.only(left: 12, top: 4, bottom: 4),
+      blockquote: AppTextStyles.bodyMedium.copyWith(
+        color:     textColor.withValues(alpha: 0.75),
+        fontStyle: FontStyle.italic,
+        height:    1.6,
+      ),
+
+      // ── Horizontal rule ────────────────────────────
+      horizontalRuleDecoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: isDark ? AppColors.dividerDark : AppColors.dividerLight,
+          ),
+        ),
+      ),
+
+      // ── Table ──────────────────────────────────────
+      tableHead: AppTextStyles.bodyMedium.copyWith(
+        color:      textColor,
+        fontWeight: FontWeight.w600,
+      ),
+      tableBody: AppTextStyles.bodyMedium.copyWith(color: textColor),
+      tableBorder: TableBorder.all(
+        color: isDark ? AppColors.dividerDark : AppColors.dividerLight,
+      ),
+      tableCellsPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+
+      // ── Spacing ────────────────────────────────────
+      pPadding:         const EdgeInsets.only(bottom: 8),
+      h1Padding:        const EdgeInsets.only(bottom: 8),
+      h2Padding:        const EdgeInsets.only(bottom: 6),
+      h3Padding:        const EdgeInsets.only(bottom: 4),
+      blockSpacing:     8,
     );
   }
 
@@ -291,7 +395,7 @@ class _BubbleOptionsSheet extends StatelessWidget {
             width:  40, height: 4,
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
-              color:        scheme.onBackground.withOpacity(0.15),
+              color:        scheme.onSurface.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -349,7 +453,7 @@ class _OptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final c      = color ?? scheme.onBackground;
+    final c      = color ?? scheme.onSurface;
 
     return ListTile(
       leading:  Icon(icon, color: c, size: 20),

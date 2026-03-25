@@ -78,7 +78,8 @@ class _ChatInputBarState extends State<ChatInputBar>
     if (text.isEmpty || widget.isLoading || _isDiagnosed) return;
     widget.onSend(text);
     _controller.clear();
-    _focusNode.requestFocus();
+    // Dismiss keyboard — it stays hidden while the AI responds
+    _focusNode.unfocus();
   }
 
   @override

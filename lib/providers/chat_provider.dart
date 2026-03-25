@@ -339,6 +339,7 @@ Future<void> _sendViaWebSocket(String content) async {
   void _updateStreamingBubble(String id, String content) {
     final idx = _messages.indexWhere((m) => m.id == id);
     if (idx == -1) return;
+    _isStreaming = true;
     _messages[idx] = _messages[idx].copyWith(content: content);
     notifyListeners();
   }
