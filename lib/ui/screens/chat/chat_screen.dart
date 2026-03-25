@@ -24,9 +24,29 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
   final ScrollController         _scrollController = ScrollController();
   final GlobalKey<ScaffoldState> _scaffoldKey      = GlobalKey<ScaffoldState>();
+  ChatProvider? _chatProvider;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final newProvider = context.read<ChatProvider>();
+    if (_chatProvider != newProvider) {
+      _chatProvider?.removeListener(_onChatChanged);
+      _chatProvider = newProvider;
+      _chatProvider!.addListener(_onChatChanged);
+    }
+  }
+
+  void _onChatChanged() {
+    // Auto-scroll while streaming so the user sees new tokens
+    if (_chatProvider?.isStreaming == true) {
+      _scrollToBottom();
+    }
+  }
 
   @override
   void dispose() {
+    _chatProvider?.removeListener(_onChatChanged);
     _scrollController.dispose();
     super.dispose();
   }
@@ -48,11 +68,11 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-Future<void> _sendMessage(String text) async {
-  FocusScope.of(context).unfocus();  
-  await context.read<ChatProvider>().sendMessage(text);
-  _scrollToBottom();
-}
+  Future<void> _sendMessage(String text) async {
+    FocusScope.of(context).unfocus();
+    await context.read<ChatProvider>().sendMessage(text);
+    _scrollToBottom();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -358,22 +378,13 @@ class _EmptyStateState extends State<_EmptyState>
             children: [
 
               // ── Logo badge 
-              Container(
-                width:  48,
-                height: 48,
-                decoration: BoxDecoration(
-                  gradient:     AppColors.primaryGradient,
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Center(
-                  child: Text(
-                    '✚',
-                    style: TextStyle(
-                      fontSize: 22,
-                      color:    AppColors.white,
-                      height:   1,
-                    ),
-                  ),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width:  48,
+                  height: 48,
+                  fit:    BoxFit.contain,
                 ),
               ),
 
