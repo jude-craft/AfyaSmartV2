@@ -31,7 +31,7 @@
 - **Chat History** - Persistent conversation tracking
 - **Responsive UI** - Optimized for all screen sizes
 - **Smooth Animations** - Enhanced UX with Lottie and custom animations
-- **Multi-platform Support** - Android, iOS, Web, macOS, Linux, and Windows
+- **Multi-platform Support** - Android, iOS
 
 ---
 
