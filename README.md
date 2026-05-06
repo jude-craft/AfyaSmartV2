@@ -21,7 +21,7 @@
 
 ---
 
-## ✨ Features
+## Features
 
 - **Firebase Authentication** - Secure user authentication with Firebase
 - **Google Sign-In** - Social authentication for quick onboarding
