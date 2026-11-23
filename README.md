@@ -247,7 +247,7 @@ Afya Smart follows a **Model-View-ViewModel (MVVM)** architecture combined with 
 
 ---
 
-## 🔑 Firebase Configuration
+##  Firebase Configuration
 
 Afya Smart integrates with **Firebase** for:
 - **Authentication** - User sign-up and login
@@ -365,11 +365,6 @@ test: Add unit tests for validators
 - Run `dart format` to format code
 - Test on multiple devices/platforms
 
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see LICENSE file for details.
 
 ---
 
